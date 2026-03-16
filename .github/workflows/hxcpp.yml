@@ -34,10 +34,14 @@ jobs:
           cd project
           haxe compile-cppia.hxml
 
+      - name: List files
+        run: ls -R tools/hxcpp
+
       - name: Upload HXCPP Artifact
         uses: actions/upload-artifact@v4
         with:
           name: hxcpp-built
           path: |
-            tools/hxcpp/bin
-            tools/run/bin
+            tools/hxcpp
+            tools/run
+            project
