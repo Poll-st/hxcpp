@@ -1,0 +1,42 @@
+name: Build HXCPP from source
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-hxcpp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Haxe
+        uses: haxe/setup-haxe@v2
+        with:
+          haxe-version: '4.3.2'
+
+      - name: Install Neko (required by hxcpp)
+        run: sudo apt-get install -y neko
+
+      - name: Clone hxcpp source
+        run: |
+          mkdir -p $HOME/haxelib
+          cd $HOME/haxelib
+          git clone https://github.com/HaxeFoundation/hxcpp.git
+          cd hxcpp
+          git checkout master
+
+      - name: Build hxcpp tools
+        run: |
+          cd $HOME/haxelib/hxcpp/tools/hxcpp
+          haxe compile.hxml
+
+      - name: Set hxcpp as dev version
+        run: |
+          cd $HOME/haxelib/hxcpp
+          haxelib dev hxcpp $HOME/haxelib/hxcpp
+
+      - name: Verify hxcpp
+        run: haxelib list
