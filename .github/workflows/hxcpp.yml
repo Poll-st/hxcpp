@@ -38,4 +38,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: hxcpp-built
-          path: hxcpp-source
+          path: |
+            tools/hxcpp/bin
+            tools/run/bin
