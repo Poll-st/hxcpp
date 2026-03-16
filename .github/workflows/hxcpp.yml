@@ -8,17 +8,21 @@ on:
 jobs:
   build-hxcpp:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Haxe
-        uses: haxe/setup-haxe@v2
-        with:
-          haxe-version: '4.3.2'
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git unzip curl build-essential neko
 
-      - name: Install Neko (required by hxcpp)
-        run: sudo apt-get install -y neko
+      - name: Install Haxe
+        run: |
+          curl -fsSL https://haxe.org/website-content/downloads/4.3.2/downloads/haxe-4.3.2-linux64.tar.gz | tar -xz -C $HOME
+          export PATH="$HOME/haxe-4.3.2:$PATH"
+          haxe --version
 
       - name: Clone hxcpp source
         run: |
@@ -31,12 +35,12 @@ jobs:
       - name: Build hxcpp tools
         run: |
           cd $HOME/haxelib/hxcpp/tools/hxcpp
-          haxe compile.hxml
+          $HOME/haxe-4.3.2/haxe compile.hxml
 
       - name: Set hxcpp as dev version
         run: |
           cd $HOME/haxelib/hxcpp
-          haxelib dev hxcpp $HOME/haxelib/hxcpp
+          $HOME/haxe-4.3.2/haxelib dev hxcpp $HOME/haxelib/hxcpp
 
       - name: Verify hxcpp
-        run: haxelib list
+        run: $HOME/haxe-4.3.2/haxelib list
