@@ -1,38 +1,40 @@
-name: Build HXCPP from Local Source
+name: Build HXCPP from Source
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build-hxcpp:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - uses: krdlab/setup-haxe@master
+      - name: Setup Haxe 4.3.4
+        uses: krdlab/setup-haxe@master
         with:
           haxe-version: 4.3.4
 
-      - run: haxelib setup ~/haxelib
+      - name: Setup Haxelib
+        run: haxelib setup ~/haxelib
 
-      - run: |
+      - name: Build HXCPP Tools
+        run: |
           REPO=$(pwd)
-          cd ${REPO}/tools/run
+          cd "$REPO/tools/run"
           haxe compile.hxml
-          cd ${REPO}/tools/hxcpp
+          cd "$REPO/tools/hxcpp"
           haxe compile.hxml
-          cd $REPO
-
-      - run: |
-          REPO=$(pwd)
-          cd ${REPO}/project
+          cd "$REPO"
           haxe compile-cppia.hxml
-          cd $REPO
 
-      - run: haxelib dev hxcpp .
+      - name: Register HXCPP with Haxelib
+        run: |
+          REPO=$(pwd)
+          haxelib dev hxcpp "$REPO"
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: hxcpp-built
-          path: .
+      - name: Verify HXCPP Installation
+        run: |
+          haxelib list | grep hxcpp
