@@ -1,46 +1,49 @@
-name: Build HXCPP from source
+name: Build hxcpp from Source
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   build-hxcpp:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git unzip curl build-essential neko
-
-      - name: Install Haxe
+      - name: Install Haxe 4.3.2
         run: |
           curl -fsSL https://haxe.org/website-content/downloads/4.3.2/downloads/haxe-4.3.2-linux64.tar.gz | tar -xz -C $HOME
-          export PATH="$HOME/haxe-4.3.2:$PATH"
+          export PATH="$HOME/haxe-4.3.2:$HOME/haxe-4.3.2/bin:$PATH"
+          echo "PATH=$PATH" >> $GITHUB_ENV
           haxe --version
 
-      - name: Clone hxcpp source
+      - name: Install Neko (required by hxcpp)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y neko
+          neko -version
+
+      - name: Clone hxcpp
         run: |
           mkdir -p $HOME/haxelib
           cd $HOME/haxelib
           git clone https://github.com/HaxeFoundation/hxcpp.git
           cd hxcpp
-          git checkout master
+          git checkout master  # or a specific commit/tag if needed
 
-      - name: Build hxcpp tools
+      - name: Compile hxcpp tools
         run: |
           cd $HOME/haxelib/hxcpp/tools/hxcpp
-          $HOME/haxe-4.3.2/haxe compile.hxml
+          haxe compile.hxml
 
-      - name: Set hxcpp as dev version
+      - name: Setup hxcpp as dev library
         run: |
           cd $HOME/haxelib/hxcpp
-          $HOME/haxe-4.3.2/haxelib dev hxcpp $HOME/haxelib/hxcpp
+          haxelib dev hxcpp $HOME/haxelib/hxcpp
 
       - name: Verify hxcpp
-        run: $HOME/haxe-4.3.2/haxelib list
+        run: |
+          haxelib list | grep hxcpp
