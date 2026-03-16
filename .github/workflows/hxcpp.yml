@@ -9,33 +9,33 @@ jobs:
   build-hxcpp:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup Haxe 4.3.4
-        uses: krdlab/setup-haxe@master
+      - uses: krdlab/setup-haxe@master
         with:
           haxe-version: 4.3.4
 
-      - name: Setup Haxelib
-        run: haxelib setup ~/haxelib
+      - run: haxelib setup ~/haxelib
 
       - name: Build HXCPP Tools
         run: |
-          REPO=$(pwd)
-          cd "$REPO/tools/run"
+          cd tools/run
           haxe compile.hxml
-          cd "$REPO/tools/hxcpp"
+          cd ../hxcpp
           haxe compile.hxml
-          cd "$REPO/project"
+
+      - name: Register HXCPP as dev lib
+        run: |
+          cd $GITHUB_WORKSPACE
+          haxelib dev hxcpp "$GITHUB_WORKSPACE"
+
+      - name: Build HXCPP Cppia Host
+        run: |
+          cd project
           haxe compile-cppia.hxml
-          cd "$REPO"
 
-      - name: Register HXCPP with Haxelib
-        run: |
-          REPO=$(pwd)
-          haxelib dev hxcpp "$REPO"
-
-      - name: Verify HXCPP Installation
-        run: |
-          haxelib list | grep hxcpp
+      - name: Upload HXCPP Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hxcpp-built
+          path: hxcpp-source
