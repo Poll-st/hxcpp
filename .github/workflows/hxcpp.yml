@@ -1,37 +1,57 @@
-name: Build HXCPP from Source
+name: Build HXCPP from source
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build-hxcpp:
     runs-on: ubuntu-latest
+    env:
+      HAXELIB_HOME: ${{ github.workspace }}/haxelib
 
     steps:
-    - name: Checkout repository
+    - name: Checkout repo
       uses: actions/checkout@v3
 
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y curl git neko build-essential
-
-    - name: Install Haxe 4.3.2
       run: |
-        curl -fsSL https://haxe.org/website-content/downloads/4.3.2/downloads/haxe-4.3.2-linux64.tar.gz | tar -xz -C $HOME
-        echo "$HOME/haxe-4.3.2:$HOME/haxe-4.3.2/bin" >> $GITHUB_PATH
+        sudo apt-get update
+        sudo apt-get install -y git curl unzip build-essential cmake neko
+
+    - name: Download Haxe 4.3.2
+      run: |
+        mkdir -p $HOME/haxe
+        curl -fsSL https://haxe.org/website-content/downloads/4.3.2/downloads/haxe-4.3.2-linux64.tar.gz | tar -xz -C $HOME/haxe
+        echo "export PATH=$HOME/haxe/haxe-4.3.2:$PATH" >> $GITHUB_ENV
 
     - name: Verify Haxe
-      run: haxe --version
-
-    - name: Install hxcpp from Git
       run: |
-        mkdir -p $HOME/haxelib
-        haxelib git hxcpp https://github.com/HaxeFoundation/hxcpp.git
+        haxe --version
+        neko
+
+    - name: Install Haxelib
+      run: |
+        curl -fsSL https://lib.haxe.org/haxelib/install.sh | sh
+        haxelib setup $HOME/haxelib
+        haxelib list
+
+    - name: Clone HXCPP
+      run: |
+        mkdir -p $HOME/haxelib/hxcpp
+        git clone https://github.com/HaxeFoundation/hxcpp.git $HOME/haxelib/hxcpp/git
+
+    - name: Build HXCPP
+      run: |
         cd $HOME/haxelib/hxcpp/git/tools/hxcpp
         haxe compile.hxml
         cd $HOME
         haxelib dev hxcpp $HOME/haxelib/hxcpp/git
+        haxelib list
 
-    - name: Verify hxcpp
-      run: haxelib list | grep hxcpp
+    - name: Upload HXCPP artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: hxcpp-built
+        path: $HOME/haxelib/hxcpp/git
