@@ -1,49 +1,37 @@
-name: Build hxcpp from Source
+name: Build HXCPP from Source
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build-hxcpp:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Install Haxe 4.3.2
-        run: |
-          curl -fsSL https://haxe.org/website-content/downloads/4.3.2/downloads/haxe-4.3.2-linux64.tar.gz | tar -xz -C $HOME
-          export PATH="$HOME/haxe-4.3.2:$HOME/haxe-4.3.2/bin:$PATH"
-          echo "PATH=$PATH" >> $GITHUB_ENV
-          haxe --version
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y curl git neko build-essential
 
-      - name: Install Neko (required by hxcpp)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y neko
-          neko -version
+    - name: Install Haxe 4.3.2
+      run: |
+        curl -fsSL https://haxe.org/website-content/downloads/4.3.2/downloads/haxe-4.3.2-linux64.tar.gz | tar -xz -C $HOME
+        echo "$HOME/haxe-4.3.2:$HOME/haxe-4.3.2/bin" >> $GITHUB_PATH
 
-      - name: Clone hxcpp
-        run: |
-          mkdir -p $HOME/haxelib
-          cd $HOME/haxelib
-          git clone https://github.com/HaxeFoundation/hxcpp.git
-          cd hxcpp
-          git checkout master  # or a specific commit/tag if needed
+    - name: Verify Haxe
+      run: haxe --version
 
-      - name: Compile hxcpp tools
-        run: |
-          cd $HOME/haxelib/hxcpp/tools/hxcpp
-          haxe compile.hxml
+    - name: Install hxcpp from Git
+      run: |
+        mkdir -p $HOME/haxelib
+        haxelib git hxcpp https://github.com/HaxeFoundation/hxcpp.git
+        cd $HOME/haxelib/hxcpp/git/tools/hxcpp
+        haxe compile.hxml
+        cd $HOME
+        haxelib dev hxcpp $HOME/haxelib/hxcpp/git
 
-      - name: Setup hxcpp as dev library
-        run: |
-          cd $HOME/haxelib/hxcpp
-          haxelib dev hxcpp $HOME/haxelib/hxcpp
-
-      - name: Verify hxcpp
-        run: |
-          haxelib list | grep hxcpp
+    - name: Verify hxcpp
+      run: haxelib list | grep hxcpp
