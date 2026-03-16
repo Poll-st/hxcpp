@@ -1,57 +1,37 @@
-name: Build HXCPP from source
+name: Build HXCPP from Source
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build-hxcpp:
     runs-on: ubuntu-latest
-    env:
-      HAXELIB_HOME: ${{ github.workspace }}/haxelib
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+      - name: Checkout HXCPP Source
+        uses: actions/checkout@v3
+        with:
+          repository: Poll-st/hxcpp
+          path: hxcpp-source
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y git curl unzip build-essential cmake neko
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@master
+        with:
+          haxe-version: 4.3.4
 
-    - name: Download Haxe 4.3.2
-      run: |
-        mkdir -p $HOME/haxe
-        curl -fsSL https://haxe.org/website-content/downloads/4.3.2/downloads/haxe-4.3.2-linux64.tar.gz | tar -xz -C $HOME/haxe
-        echo "export PATH=$HOME/haxe/haxe-4.3.2:$PATH" >> $GITHUB_ENV
+      - name: Setup Haxelib
+        run: haxelib setup ~/haxelib
 
-    - name: Verify Haxe
-      run: |
-        haxe --version
-        neko
+      - name: Build HXCPP
+        run: |
+          cd hxcpp-source/tools/hxcpp
+          haxe compile.hxml
 
-    - name: Install Haxelib
-      run: |
-        curl -fsSL https://lib.haxe.org/haxelib/install.sh | sh
-        haxelib setup $HOME/haxelib
-        haxelib list
+      - name: Register HXCPP as Dev Library
+        run: haxelib dev hxcpp hxcpp-source
 
-    - name: Clone HXCPP
-      run: |
-        mkdir -p $HOME/haxelib/hxcpp
-        git clone https://github.com/HaxeFoundation/hxcpp.git $HOME/haxelib/hxcpp/git
-
-    - name: Build HXCPP
-      run: |
-        cd $HOME/haxelib/hxcpp/git/tools/hxcpp
-        haxe compile.hxml
-        cd $HOME
-        haxelib dev hxcpp $HOME/haxelib/hxcpp/git
-        haxelib list
-
-    - name: Upload HXCPP artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: hxcpp-built
-        path: $HOME/haxelib/hxcpp/git
+      - name: Upload HXCPP Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hxcpp-built
+          path: hxcpp-source
