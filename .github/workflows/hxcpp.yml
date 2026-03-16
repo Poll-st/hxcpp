@@ -51,7 +51,7 @@ jobs:
         haxelib list
 
     - name: Upload HXCPP artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: hxcpp-built
         path: $HOME/haxelib/hxcpp/git
